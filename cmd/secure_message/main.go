@@ -2,8 +2,11 @@ package main
 
 import (
 	"context"
+	"fmt"
 	"github.com/dyammarcano/secure_message/internal/metadata"
 	"github.com/spf13/cobra"
+	"os"
+	"runtime/trace"
 )
 
 var (
@@ -13,14 +16,22 @@ var (
 )
 
 var rootCmd = &cobra.Command{
-	Use:   "template-go",
-	Short: "A brief description of your application",
-	Long: `A longer description that spans multiple lines and likely contains
-examples and usage of using your application. For example:
+	Use:   "secure_message",
+	Short: "secure_message is a CLI tool to encrypt and decrypt messages",
+}
 
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
+var versionCmd = &cobra.Command{
+	Use:   "version",
+	Short: "Print version information",
+	Run: func(cmd *cobra.Command, _ []string) {
+		defer trace.StartRegion(cmd.Context(), "version").End()
+		// clean console
+		fmt.Fprintf(cmd.OutOrStdout(), "\033[H\033[2J")
+
+		// print version
+		fmt.Fprintf(cmd.OutOrStdout(), metadata.String())
+		os.Exit(0)
+	},
 }
 
 func main() {
@@ -32,5 +43,8 @@ func main() {
 }
 
 func init() {
+	rootCmd.AddCommand(versionCmd)
+	rootCmd.CompletionOptions.DisableDefaultCmd = true
+
 	metadata.Set(Version, CommitHash, Date)
 }
