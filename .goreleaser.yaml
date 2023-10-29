@@ -6,7 +6,7 @@ before:
     - go generate ./...
 
 builds:
-  - main: ./
+  - main: ./cmd/secure_message/main.go
     goos:
       - linux
       - windows

@@ -2,7 +2,7 @@ package main
 
 import (
 	"context"
-	"github.com/dyammarcano/module-template-go/internal/metadata"
+	"github.com/dyammarcano/secure_message/internal/metadata"
 	"github.com/spf13/cobra"
 )
 
