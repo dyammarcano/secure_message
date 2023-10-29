@@ -10,13 +10,13 @@ builds:
     goos:
       - linux
       - windows
-      - darwin
+#      - darwin
     goarch:
       - amd64
     ldflags:
       - -s -w -X 'main.Version={{.Version}}' -X 'main.CommitHash={{.FullCommit}}' -X 'main.Date={{.Date}}'
     env:
-      - CGO_ENABLED=0
+      - CGO_ENABLED=1
 
 archives:
   - format: tar.gz
