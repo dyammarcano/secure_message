@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestEncoding(t *testing.T) {
+func TestEncoding1kChars(t *testing.T) {
 	serialized, err := Serialize("hello world")
 	assert.Nil(t, err)
 
