@@ -3,7 +3,7 @@ package compression
 import (
 	"bytes"
 	"compress/gzip"
-	"github.com/dyammarcano/secure_message/internal/helpers"
+	"log"
 )
 
 func CompressData(data []byte) ([]byte, error) {
@@ -25,7 +25,11 @@ func DecompressData(compressedData []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer helpers.Closer(gzipReader)
+	defer func() {
+		if err := gzipReader.Close(); err != nil {
+			log.Fatalf("error closing gzip reader: %v", err)
+		}
+	}()
 
 	if _, err = buffer.ReadFrom(gzipReader); err != nil {
 		return nil, err
