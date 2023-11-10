@@ -4,13 +4,14 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"github.com/dyammarcano/secure_message/internal/config"
 	"github.com/dyammarcano/secure_message/internal/encoding"
-	"github.com/dyammarcano/secure_message/internal/helpers"
 	"github.com/dyammarcano/secure_message/internal/metadata"
 	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+	"io/fs"
 	"os"
 	"runtime/trace"
+	"strings"
 )
 
 var (
@@ -43,19 +44,16 @@ var (
 		Long: `Encrypt command takes the message as the input 
 ./my_app decrypt "encrypt message to encrypt"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if config.C.Flags.InputFile != "" {
+			inputFile := viper.GetString("input")
+			if inputFile != "" {
 				return encryptFile(cmd, args)
 			}
 
-			msg := helpers.ArgsToString(args)
-
-			// encrypt message
-			encrypted, err := encoding.Serialize(msg)
+			encrypted, err := encoding.Serialize(argsToString(args))
 			if err != nil {
 				return err
 			}
 
-			// print encrypted message
 			cmd.Println(encrypted)
 
 			return nil
@@ -70,24 +68,17 @@ and provides the decrypted message as the output. For example:
 
 ./secure_message decrypt "encrypted message"`,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			if !helpers.FileExists(config.C.DatabaseFilePath) {
-				cmd.Println("Database file not found, import keys to continue.")
-				os.Exit(1)
-			}
+			inputFile := viper.GetString("input")
 
-			if config.C.Flags.InputFile != "" {
+			if inputFile != "" {
 				return decryptFile(cmd, args)
 			}
 
-			msg := helpers.ArgsToString(args)
-
-			// decrypt message
-			decrypted, err := encoding.Deserialize(msg)
+			decrypted, err := encoding.Deserialize(argsToString(args))
 			if err != nil {
 				return err
 			}
 
-			// print decrypted message
 			cmd.Println(decrypted)
 			return nil
 		},
@@ -103,11 +94,15 @@ func main() {
 }
 
 func init() {
-	decryptCmd.Flags().StringVarP(&config.C.Flags.InputFile, "input", "i", "", "input file to decrypt")
-	decryptCmd.Flags().StringVarP(&config.C.Flags.OutputFile, "output", "o", "", "output file to save decrypted message")
+	rootCmd.PersistentFlags().String("input", "", "input file")
+	if err := viper.BindPFlag("input", rootCmd.Flags().Lookup("input")); err != nil {
+		panic(err)
+	}
 
-	encryptCmd.Flags().StringVarP(&config.C.Flags.InputFile, "input", "i", "", "input file to encrypt")
-	encryptCmd.Flags().StringVarP(&config.C.Flags.OutputFile, "output", "o", "", "output file to save encrypted message")
+	rootCmd.PersistentFlags().String("output", "", "output file")
+	if err := viper.BindPFlag("output", rootCmd.Flags().Lookup("output")); err != nil {
+		panic(err)
+	}
 
 	rootCmd.AddCommand(decryptCmd)
 	rootCmd.AddCommand(encryptCmd)
@@ -117,66 +112,79 @@ func init() {
 	metadata.Set(Version, CommitHash, Date)
 }
 
-func encryptFile(cmd *cobra.Command, args []string) error {
-	// check if file exists
-	if !helpers.FileExists(config.C.Flags.InputFile) {
-		return errors.New("file not found")
+func encryptFile(cmd *cobra.Command, _ []string) error {
+	inputFile := viper.GetString("input")
+
+	if _, err := os.Stat(inputFile); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			cobra.CheckErr(err)
+		}
 	}
 
-	// read file
-	file, err := os.ReadFile(config.C.Flags.InputFile)
+	data, err := os.ReadFile(inputFile)
 	if err != nil {
 		return err
 	}
 
-	// encrypt file
-	encrypted, err := encoding.Serialize(string(file))
+	encrypted, err := encoding.Serialize(string(data))
 	if err != nil {
 		return err
 	}
 
-	if config.C.Flags.OutputFile != "" {
-		// write encrypted message to file
-		err = os.WriteFile(config.C.Flags.OutputFile, []byte(encrypted), 0644)
+	outputFile := viper.GetString("ouput")
+
+	if outputFile != "" {
+		err = os.WriteFile(outputFile, []byte(encrypted), 0644)
 		if err != nil {
 			return err
 		}
 		return nil
 	}
 
-	// print encrypted message
 	cmd.Println(encrypted)
 
 	return nil
 }
 
 func decryptFile(cmd *cobra.Command, args []string) error {
-	// check if file exists
-	if !helpers.FileExists(config.C.Flags.InputFile) {
-		return errors.New("file not found")
+	inputFile := viper.GetString("input")
+
+	if _, err := os.Stat(inputFile); err != nil {
+		if errors.Is(err, fs.ErrNotExist) {
+			cobra.CheckErr(err)
+		}
 	}
 
-	// read file
-	file, err := os.ReadFile(config.C.Flags.InputFile)
+	file, err := os.ReadFile(inputFile)
 	if err != nil {
 		return err
 	}
 
-	// decrypt message
 	decrypted, err := encoding.Deserialize(string(file))
 	if err != nil {
 		return err
 	}
 
-	if config.C.Flags.OutputFile != "" {
-		// write to file
-		if err := os.WriteFile(config.C.Flags.OutputFile, []byte(decrypted), 0644); err != nil {
+	outputFile := viper.GetString("ouput")
+
+	if outputFile != "" {
+		if err := os.WriteFile(outputFile, []byte(decrypted), 0644); err != nil {
 			return err
 		}
 		return nil
 	}
 
-	// print decrypted message
 	cmd.Println(decrypted)
 	return nil
+}
+
+// argsToString converts args to string
+func argsToString(args []string) string {
+	var msg string
+	for _, arg := range args {
+		msg += arg + " "
+	}
+
+	msg = strings.TrimRight(msg, " ")
+	return msg
 }
