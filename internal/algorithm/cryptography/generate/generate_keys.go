@@ -1,51 +1,97 @@
-//go:build generate && linux
+////go:build generate && linux
 
 package main
 
 import (
+	"crypto/rand"
 	"encoding/hex"
 	"fmt"
-	"github.com/dyammarcano/secure_message/internal/algorithm/cryptography"
 	"os"
+	"strconv"
 	"strings"
 )
 
 //go:generate go run generate_keys.go
 
+// Generate a master key
+func generateKeys(size int, setZero bool) (string, error) {
+	if setZero {
+		masterKey := strings.Builder{}
+		for i := 0; i < size; i++ {
+			masterKey.WriteString("00")
+		}
+		return masterKey.String(), nil
+	}
+
+	masterKey := make([]byte, size)
+	if _, err := rand.Read(masterKey); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(masterKey), nil
+}
+
+func getSpaces(value, totalKeys int) string {
+	strNumKeys := strconv.Itoa(totalKeys)
+	if len(strNumKeys) == 4 {
+		strNum := strconv.Itoa(value)
+		if len(strNum) == 1 {
+			return "    "
+		}
+
+		if len(strNum) == 2 {
+			return "   "
+		}
+
+		if len(strNum) == 3 {
+			return "  "
+		}
+
+		return " "
+	}
+
+	if len(strNumKeys) == 3 {
+		strNum := strconv.Itoa(value)
+		if len(strNum) == 1 {
+			return "   "
+		}
+
+		if len(strNum) == 2 {
+			return "  "
+		}
+
+		return " "
+	}
+
+	return " "
+}
+
 func main() {
 	fileName := "generated_file.go"
+	keysLength, keysNumber, setZeros := 44, 512, false
 
 	var builder strings.Builder
-	builder.WriteString(`// Package crypto this package was created by code generator
+	builder.WriteString(fmt.Sprintf(`// Package crypto this package was created by with 'go generate ./...' command
 
 package cryptography
 
-import "encoding/hex"
+const (
+	keysLenght = %d
+	keysNumber = %d
+)
 
 var stringKeys = map[int]string{
-`)
+`, keysLength, keysNumber))
 
-	for i := 0; i < 256; i++ {
-		data, err := cryptography.GenerateKeys(44)
+	for i := 0; i < keysNumber; i++ {
+		data, err := generateKeys(keysLength, setZeros)
 		if err != nil {
 			panic(err)
 		}
-		builder.WriteString(fmt.Sprintf("\t%d: \"%s\",\n", i, hex.EncodeToString(data)))
+		builder.WriteString(fmt.Sprintf(`	%d:%s"%s",
+`, i, getSpaces(i, keysNumber), data))
 	}
 
 	builder.WriteString(`}
-
-func Keys() map[int][]byte {
-	keys := make(map[int][]byte)
-	for i, key := range stringKeys {
-		data, err := hex.DecodeString(key)
-		if err != nil {
-			panic(err)
-		}
-		keys[i] = data
-	}
-	return keys
-}
 `)
 
 	//change directory

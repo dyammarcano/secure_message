@@ -5,16 +5,9 @@ import (
 	"crypto/aes"
 	"crypto/cipher"
 	"crypto/rand"
-	"encoding/binary"
 	"errors"
 	"github.com/dyammarcano/base58"
 )
-
-var globalKeys map[int][]byte
-
-func init() {
-	globalKeys = Keys()
-}
 
 // GenerateKeys generates a N bytes master key
 func GenerateKeys(size int) ([]byte, error) {
@@ -25,40 +18,36 @@ func GenerateKeys(size int) ([]byte, error) {
 	return masterKey, nil
 }
 
-// convertToKeys its return 256 bits for key and 96 bits GCM nonce
-func convertToKeys(inputKey []byte, keys map[int][]byte) ([]byte, []byte, error) {
-	if len(keys) == 0 {
-		return nil, nil, errors.New("keys map is empty")
-	}
-
-	if len(inputKey) < 2 {
-		return nil, nil, errors.New("input key too short")
-	}
-
-	sl := int(binary.BigEndian.Uint16(inputKey)) % len(keys)
-	selectedKey := keys[sl]
-
-	matrixKey := make([]byte, len(selectedKey))
-	for i, value := range selectedKey {
-		sk := i % len(inputKey)
-		matrixKey[i] = value ^ inputKey[sk]
-	}
-
-	key := make([]byte, 32) // 256 bits for AES-256
-	copy(key, matrixKey[:len(key)])
-
-	nonce := make([]byte, 12) // 96 bits for GCM nonce
-	copy(nonce, matrixKey[:len(nonce)])
-
-	return key, nonce, nil
-}
+//// ConvertToKeys its return 256 bits for key and 96 bits GCM nonce
+//func ConvertToKeys(inputKey []byte) ([]byte, []byte, error) {
+//	if len(inputKey) < 2 {
+//		return nil, nil, errors.New("input key too short")
+//	}
+//
+//	sl := int(binary.BigEndian.Uint16(inputKey)) % len(keys)
+//	selectedKey := keys[sl]
+//
+//	matrixKey := make([]byte, len(selectedKey))
+//	for i, value := range selectedKey {
+//		sk := i % len(inputKey)
+//		matrixKey[i] = value ^ inputKey[sk]
+//	}
+//
+//	key := make([]byte, 32) // 256 bits for AES-256
+//	copy(key, matrixKey[:len(key)])
+//
+//	nonce := make([]byte, 12) // 96 bits for GCM nonce
+//	copy(nonce, matrixKey[:len(nonce)])
+//
+//	return key, nonce, nil
+//}
 
 // wrapValues wraps the key and cypherText into a single byte array
 func wrapValues(cypherText, key []byte) []byte {
 	var response bytes.Buffer
 	response.Write(key)                // write 32 bytes to store the key
 	response.Write(cypherText)         // write the rest of the bytes to store the cypherText
-	response.WriteByte(byte(len(key))) // write 1 byte to store the key size
+	response.WriteByte(byte(len(key))) // write 1 byte to store the key s
 
 	return response.Bytes()
 }
@@ -70,7 +59,7 @@ func unwrapValues(cypherText []byte) ([]byte, []byte, []byte, error) {
 	}
 
 	keyLen := int(cypherText[len(cypherText)-1])
-	key, nonce, err := convertToKeys(cypherText[:keyLen], globalKeys)
+	key, nonce, err := globalKeys.ConvertToKeys(cypherText[:keyLen])
 	if err != nil {
 		return nil, nil, nil, err
 	}
@@ -79,7 +68,7 @@ func unwrapValues(cypherText []byte) ([]byte, []byte, []byte, error) {
 
 // encrypt encrypts a message using AES-256-GCM
 func encrypt(message, password []byte) ([]byte, error) {
-	key, nonce, err := convertToKeys(password, globalKeys)
+	key, nonce, err := globalKeys.ConvertToKeys(password)
 	if err != nil {
 		return nil, err
 	}
