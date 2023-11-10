@@ -16,22 +16,22 @@ func TestEncryptString(t *testing.T) {
 }
 
 func TestEncryptBytes(t *testing.T) {
-	encrypted, err := AutoEncryptBytes([]byte("hello world"))
+	encrypted, err := AutoEncryptBytes(rkeys[0])
 	assert.Nil(t, err)
 
 	decrypted, err := AutoDecryptBytes(encrypted)
 	assert.Nil(t, err)
 
-	assert.Equal(t, decrypted, []byte("hello world"))
+	assert.Equal(t, decrypted, rkeys[0])
 }
 
 func TestEncrypt(t *testing.T) {
 	hello := []byte("hello")
 
-	enc, err := encrypt(hello, []byte("supersecret"))
+	enc, err := g.encrypt(hello, rkeys[0])
 	assert.Nil(t, err)
 
-	dec, err := decrypt(enc)
+	dec, err := g.decrypt(enc)
 	assert.Nil(t, err)
 
 	assert.Equal(t, hello, dec)
@@ -45,10 +45,10 @@ func TestEncryptRandomKeys(t *testing.T) {
 		key, err := GenerateKeys(value[i])
 		assert.Nil(t, err)
 
-		enc, err := encrypt(hello, key)
+		enc, err := g.encrypt(hello, key)
 		assert.Nil(t, err)
 
-		dec, err := decrypt(enc)
+		dec, err := g.decrypt(enc)
 		assert.Nil(t, err)
 
 		assert.Equal(t, hello, dec)

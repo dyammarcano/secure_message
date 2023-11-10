@@ -1,11 +1,7 @@
 package cryptography
 
 import (
-	"bytes"
-	"crypto/aes"
-	"crypto/cipher"
 	"crypto/rand"
-	"errors"
 	"github.com/dyammarcano/base58"
 )
 
@@ -18,108 +14,6 @@ func GenerateKeys(size int) ([]byte, error) {
 	return masterKey, nil
 }
 
-//// ConvertToKeys its return 256 bits for key and 96 bits GCM nonce
-//func ConvertToKeys(inputKey []byte) ([]byte, []byte, error) {
-//	if len(inputKey) < 2 {
-//		return nil, nil, errors.New("input key too short")
-//	}
-//
-//	sl := int(binary.BigEndian.Uint16(inputKey)) % len(keys)
-//	selectedKey := keys[sl]
-//
-//	matrixKey := make([]byte, len(selectedKey))
-//	for i, value := range selectedKey {
-//		sk := i % len(inputKey)
-//		matrixKey[i] = value ^ inputKey[sk]
-//	}
-//
-//	key := make([]byte, 32) // 256 bits for AES-256
-//	copy(key, matrixKey[:len(key)])
-//
-//	nonce := make([]byte, 12) // 96 bits for GCM nonce
-//	copy(nonce, matrixKey[:len(nonce)])
-//
-//	return key, nonce, nil
-//}
-
-// wrapValues wraps the key and cypherText into a single byte array
-func wrapValues(cypherText, key []byte) []byte {
-	var response bytes.Buffer
-	response.Write(key)                // write 32 bytes to store the key
-	response.Write(cypherText)         // write the rest of the bytes to store the cypherText
-	response.WriteByte(byte(len(key))) // write 1 byte to store the key s
-
-	return response.Bytes()
-}
-
-// unwrapValues unwraps the key, nonce and cypherText from a single byte array
-func unwrapValues(cypherText []byte) ([]byte, []byte, []byte, error) {
-	if len(cypherText) < 2 {
-		return nil, nil, nil, errors.New("cypherText too short")
-	}
-
-	keyLen := int(cypherText[len(cypherText)-1])
-	key, nonce, err := globalKeys.ConvertToKeys(cypherText[:keyLen])
-	if err != nil {
-		return nil, nil, nil, err
-	}
-	return key, nonce, cypherText[keyLen : len(cypherText)-1], nil
-}
-
-// encrypt encrypts a message using AES-256-GCM
-func encrypt(message, password []byte) ([]byte, error) {
-	key, nonce, err := globalKeys.ConvertToKeys(password)
-	if err != nil {
-		return nil, err
-	}
-
-	cc, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(cc)
-	if err != nil {
-		return nil, err
-	}
-
-	sealed := gcm.Seal(nil, nonce, message, nil)
-	if sealed == nil {
-		return nil, errors.New("encryption error")
-	}
-
-	return wrapValues(sealed, password), nil
-}
-
-// decrypt decrypts a message using AES-256-GCM
-func decrypt(cypherText []byte) ([]byte, error) {
-	key, nonce, message, err := unwrapValues(cypherText)
-	if err != nil {
-		return nil, err
-	}
-
-	cc, err := aes.NewCipher(key)
-	if err != nil {
-		return nil, err
-	}
-
-	gcm, err := cipher.NewGCM(cc)
-	if err != nil {
-		return nil, err
-	}
-
-	decrypted, err := gcm.Open(nil, nonce, message, nil)
-	if err != nil {
-		return nil, err
-	}
-
-	if decrypted == nil {
-		return nil, errors.New("decryption error")
-	}
-
-	return decrypted, nil
-}
-
 // AutoEncryptString decrypts a message using AES-256-GCM
 func AutoEncryptString(message string) (string, error) {
 	generateKey, err := GenerateKeys(12)
@@ -127,7 +21,7 @@ func AutoEncryptString(message string) (string, error) {
 		return "", err
 	}
 
-	encrypted, err := encrypt([]byte(message), generateKey)
+	encrypted, err := g.encrypt([]byte(message), generateKey)
 	if err != nil {
 		return "", err
 	}
@@ -142,7 +36,7 @@ func AutoEncryptBytes(message []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	encrypted, err := encrypt(message, generateKey)
+	encrypted, err := g.encrypt(message, generateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -157,7 +51,7 @@ func AutoDecryptString(message string) (string, error) {
 		return "", err
 	}
 
-	decrypted, err := decrypt(decoded)
+	decrypted, err := g.decrypt(decoded)
 	if err != nil {
 		return "", err
 	}
@@ -171,7 +65,7 @@ func AutoDecryptBytes(message []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	decrypted, err := decrypt(decoded)
+	decrypted, err := g.decrypt(decoded)
 	if err != nil {
 		return nil, err
 	}
