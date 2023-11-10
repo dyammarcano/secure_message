@@ -7,15 +7,10 @@ import (
 	"github.com/dyammarcano/secure_message/internal/config"
 	"github.com/dyammarcano/secure_message/internal/encoding"
 	"github.com/dyammarcano/secure_message/internal/helpers"
-	"github.com/dyammarcano/secure_message/internal/management"
 	"github.com/dyammarcano/secure_message/internal/metadata"
 	"github.com/spf13/cobra"
-	"golang.org/x/crypto/ssh/terminal"
 	"os"
-	"reflect"
 	"runtime/trace"
-	"strings"
-	"syscall"
 )
 
 var (
@@ -97,26 +92,6 @@ and provides the decrypted message as the output. For example:
 			return nil
 		},
 	}
-
-	keysCmd = &cobra.Command{
-		Use:   "keys",
-		Short: "A brief description of your command",
-		Long: `A longer description that spans multiple lines and likely contains examples
-and usage of using your command. For example:
-
-Cobra is a CLI library for Go that empowers applications.
-This application is a tool to generate the needed files
-to quickly create a Cobra application.`,
-		Run: func(cmd *cobra.Command, args []string) {
-			if config.C.Flags.ExportFilePathKey != "" {
-				exportKey(cmd, args)
-			}
-
-			if config.C.Flags.ImportFilePathKey != "" {
-				importKey(cmd, args)
-			}
-		},
-	}
 )
 
 func main() {
@@ -134,107 +109,12 @@ func init() {
 	encryptCmd.Flags().StringVarP(&config.C.Flags.InputFile, "input", "i", "", "input file to encrypt")
 	encryptCmd.Flags().StringVarP(&config.C.Flags.OutputFile, "output", "o", "", "output file to save encrypted message")
 
-	keysCmd.Flags().StringVarP(&config.C.Flags.ExportFilePathKey, "export", "e", "", "export key to file")
-	keysCmd.Flags().StringVarP(&config.C.Flags.ImportFilePathKey, "import", "i", "", "import key from file")
-
 	rootCmd.AddCommand(decryptCmd)
 	rootCmd.AddCommand(encryptCmd)
-	rootCmd.AddCommand(keysCmd)
 	rootCmd.AddCommand(versionCmd)
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
 	metadata.Set(Version, CommitHash, Date)
-}
-
-func getPassword(cmd *cobra.Command, _ []string, confirm bool) ([]byte, error) {
-	cmd.Print("Enter password:")
-	bytePassword, err := terminal.ReadPassword(int(syscall.Stdin))
-	if err != nil {
-		return nil, err
-	}
-	if confirm {
-		cmd.Print("\nConfirm password:")
-		bytePassword, err = terminal.ReadPassword(int(syscall.Stdin))
-		if err != nil {
-			return nil, err
-		}
-
-		if !reflect.DeepEqual(bytePassword, bytePassword) {
-			return nil, errors.New("passwords do not match")
-		}
-	}
-
-	return bytePassword, nil
-}
-
-func exportKey(cmd *cobra.Command, args []string) {
-	password, err := getPassword(cmd, args, true)
-	if err != nil {
-		printAndExit(cmd, args, err.Error())
-	}
-
-	data, err := management.ExportKeys()
-	if err != nil {
-		printAndExit(cmd, args, err.Error())
-	}
-
-	bytesData, err := encoding.SerializeWithPassword(data, password)
-	if err != nil {
-		printAndExit(cmd, args, err.Error())
-	}
-
-	if err := os.WriteFile(config.C.Flags.ExportFilePathKey, bytesData, 0644); err != nil {
-		printAndExit(cmd, args, err.Error())
-	}
-
-	cmd.Println("Keys exported successfully")
-}
-
-func importKey(cmd *cobra.Command, args []string) {
-	if err := warningMessage(cmd, args); err != nil {
-		printAndExit(cmd, args, err.Error())
-	}
-
-	password, err := getPassword(cmd, args, false)
-	if err != nil {
-		printAndExit(cmd, args, err.Error())
-	}
-
-	data, err := os.ReadFile(config.C.Flags.ImportFilePathKey)
-	if err != nil {
-		printAndExit(cmd, args, err.Error())
-	}
-
-	data, err = encoding.DeserializeWithPassword(data, password)
-	if err != nil {
-		printAndExit(cmd, args, err.Error())
-	}
-
-	if err = management.ImportKeys(data); err != nil {
-		printAndExit(cmd, args, err.Error())
-	}
-
-	cmd.Println("Keys imported successfully")
-}
-
-func warningMessage(cmd *cobra.Command, _ []string) error {
-	cmd.Print("Warning: This command will overwrite your current keys\nDo you want to continue? [y/N] ")
-
-	var answer string
-	if _, err := fmt.Scanln(&answer); err != nil {
-		return err
-	}
-
-	if strings.ToLower(answer) != "y" {
-		return errors.New("aborted")
-	}
-
-	return nil
-}
-
-func printAndExit(cmd *cobra.Command, _ []string, message string) {
-	cmd.Println(message)
-	os.Exit(0)
 }
 
 func encryptFile(cmd *cobra.Command, args []string) error {
