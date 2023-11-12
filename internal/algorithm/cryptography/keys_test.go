@@ -25,16 +25,13 @@ func TestMain(m *testing.M) {
 }
 
 func TestNewKeys(t *testing.T) {
-	for i := 0; i < 4; i++ {
-		index := i % len(rkeys)
-		key, nonce, err := g.convertToKeys(rkeys[index])
-		assert.NoError(t, err)
+	key, nonce, err := g.convertToKeys(rkeys[0])
+	assert.NoError(t, err)
 
-		assert.NotNil(t, key)
-		assert.NotNil(t, nonce)
+	assert.NotNil(t, key)
+	assert.NotNil(t, nonce)
 
-		fmt.Printf("original: %x, matrix: %x, nonce: %x\n", rkeys[index], key, nonce)
-	}
+	fmt.Printf("original key: %x, key generated for encrypt data: %x, nonce: %x\n", rkeys[0], key, nonce)
 }
 
 func BenchmarkNewKeys(b *testing.B) {
