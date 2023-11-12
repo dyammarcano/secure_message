@@ -4,7 +4,6 @@ package cryptography
 
 const (
 	keysLenght = 44
-	keysNumber = 512
 )
 
 var stringKeys = map[int]string{

@@ -1,4 +1,4 @@
-////go:build generate && linux
+//go:build generate
 
 package main
 
@@ -76,11 +76,10 @@ package cryptography
 
 const (
 	keysLenght = %d
-	keysNumber = %d
 )
 
 var stringKeys = map[int]string{
-`, keysLength, keysNumber))
+`, keysLength))
 
 	for i := 0; i < keysNumber; i++ {
 		data, err := generateKeys(keysLength, setZeros)

@@ -21,7 +21,7 @@ func AutoEncryptString(message string) (string, error) {
 		return "", err
 	}
 
-	encrypted, err := g.encrypt([]byte(message), generateKey)
+	encrypted, err := Encrypt([]byte(message), generateKey)
 	if err != nil {
 		return "", err
 	}
@@ -36,7 +36,7 @@ func AutoEncryptBytes(message []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	encrypted, err := g.encrypt(message, generateKey)
+	encrypted, err := Encrypt(message, generateKey)
 	if err != nil {
 		return nil, err
 	}
@@ -51,7 +51,7 @@ func AutoDecryptString(message string) (string, error) {
 		return "", err
 	}
 
-	decrypted, err := g.decrypt(decoded)
+	decrypted, err := Decrypt(decoded)
 	if err != nil {
 		return "", err
 	}
@@ -65,7 +65,7 @@ func AutoDecryptBytes(message []byte) ([]byte, error) {
 		return nil, err
 	}
 
-	decrypted, err := g.decrypt(decoded)
+	decrypted, err := Decrypt(decoded)
 	if err != nil {
 		return nil, err
 	}
