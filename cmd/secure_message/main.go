@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/dyammarcano/secure_message/internal/encoding"
-	"github.com/dyammarcano/secure_message/internal/metadata"
+	"github.com/dyammarcano/secure_message/internal/version"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"io/fs"
@@ -15,10 +15,6 @@ import (
 )
 
 var (
-	Version    = "v0.0.1-manual-build"
-	CommitHash string
-	Date       string
-
 	rootCmd = &cobra.Command{
 		Use:   "secure_message",
 		Short: "secure_message is a CLI tool to encrypt and decrypt messages",
@@ -33,7 +29,7 @@ var (
 			fmt.Fprintf(cmd.OutOrStdout(), "\033[H\033[2J")
 
 			// print version
-			fmt.Fprintf(cmd.OutOrStdout(), metadata.String())
+			fmt.Fprintf(cmd.OutOrStdout(), version.GetVersionInfo())
 			os.Exit(0)
 		},
 	}
@@ -89,8 +85,7 @@ func main() {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	err := rootCmd.ExecuteContext(ctx)
-	cobra.CheckErr(err)
+	cobra.CheckErr(rootCmd.ExecuteContext(ctx))
 }
 
 func init() {
@@ -109,7 +104,6 @@ func init() {
 	rootCmd.AddCommand(versionCmd)
 
 	rootCmd.CompletionOptions.DisableDefaultCmd = true
-	metadata.Set(Version, CommitHash, Date)
 }
 
 func encryptFile(cmd *cobra.Command, _ []string) error {
@@ -134,8 +128,7 @@ func encryptFile(cmd *cobra.Command, _ []string) error {
 	outputFile := viper.GetString("ouput")
 
 	if outputFile != "" {
-		err = os.WriteFile(outputFile, []byte(encrypted), 0644)
-		if err != nil {
+		if err = os.WriteFile(outputFile, []byte(encrypted), 0644); err != nil {
 			return err
 		}
 		return nil
@@ -168,7 +161,7 @@ func decryptFile(cmd *cobra.Command, args []string) error {
 	outputFile := viper.GetString("ouput")
 
 	if outputFile != "" {
-		if err := os.WriteFile(outputFile, []byte(decrypted), 0644); err != nil {
+		if err = os.WriteFile(outputFile, []byte(decrypted), 0644); err != nil {
 			return err
 		}
 		return nil
