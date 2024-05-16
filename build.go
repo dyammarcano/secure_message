@@ -1,4 +1,4 @@
-//go:generate gofmt -w ./internal
+//go:generate gofmt -w -s .
 
 // Copyright (c) Microsoft Corporation. All rights reserved.
 // Licensed under the MIT License.
