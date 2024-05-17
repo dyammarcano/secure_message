@@ -6,15 +6,12 @@ before:
     - go generate ./...
 
 builds:
-  - main: ./cmd/secure_message/main.go
+  - main: ./cmd/sm/main.go
     goos:
       - linux
       - windows
-    #      - darwin
     goarch:
       - amd64
-    ldflags:
-      - -s -w -X 'main.Version={{.Version}}' -X 'main.CommitHash={{.FullCommit}}' -X 'main.Date={{.Date}}'
     env:
       - CGO_ENABLED=1
 

@@ -14,8 +14,8 @@ import (
 
 var (
 	rootCmd = &cobra.Command{
-		Use:   "secure_message",
-		Short: "secure_message is a CLI tool to encrypt and decrypt messages",
+		Use:   "sm",
+		Short: "sm is a CLI tool to encrypt and decrypt messages",
 	}
 
 	versionCmd = &cobra.Command{
