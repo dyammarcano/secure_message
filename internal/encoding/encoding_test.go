@@ -2,9 +2,11 @@ package encoding
 
 import (
 	"fmt"
+	"os"
+	"testing"
+
 	"github.com/dyammarcano/secure_message/internal/algorithm/cryptography"
 	"github.com/stretchr/testify/assert"
-	"testing"
 )
 
 func TestEncoding(t *testing.T) {
@@ -27,7 +29,7 @@ func TestCompression(t *testing.T) {
 		assert.Nil(t, err)
 
 		if len(serialized) < len(fmt.Sprintf("%x", data)) {
-			fmt.Printf("serialized data len: %d, original data len: %d\n", len(serialized), len(fmt.Sprintf("%x", data)))
+			_, _ = fmt.Fprintf(os.Stdout, "serialized data len: %d, original data len: %d\n\n", len(serialized), len(fmt.Sprintf("%x", data)))
 			break
 		}
 	}

@@ -43,6 +43,7 @@ func (k *Keys) convertToKeys(inputKey []byte) ([]byte, []byte, error) {
 func (k *Keys) getSpecifiedKey(inputKey []byte) ([]byte, error) {
 	index := int(binary.BigEndian.Uint16(inputKey)) % k.length
 	key := stringKeys[index]
+
 	return decodeKey(key, k.length)
 }
 
@@ -110,10 +111,12 @@ func getResponseBytes(cypherText, key []byte) []byte {
 
 func unwrapKeyNonceAndMessage(cypherText []byte, k *Keys) ([]byte, []byte, []byte, error) {
 	keyLen := int(cypherText[len(cypherText)-1])
+
 	key, nonce, err := k.convertToKeys(cypherText[:keyLen])
 	if err != nil {
 		return nil, nil, nil, err
 	}
+
 	return key, nonce, cypherText[keyLen : len(cypherText)-1], nil
 }
 

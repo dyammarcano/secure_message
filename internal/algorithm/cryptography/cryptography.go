@@ -2,6 +2,7 @@ package cryptography
 
 import (
 	"crypto/rand"
+
 	"github.com/dyammarcano/base58"
 )
 
@@ -11,6 +12,7 @@ func GenerateKeys(size int) ([]byte, error) {
 	if _, err := rand.Read(masterKey); err != nil {
 		return nil, err
 	}
+
 	return masterKey, nil
 }
 
@@ -55,6 +57,7 @@ func AutoDecryptString(message string) (string, error) {
 	if err != nil {
 		return "", err
 	}
+
 	return string(decrypted), nil
 }
 
@@ -69,5 +72,6 @@ func AutoDecryptBytes(message []byte) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
+
 	return decrypted, nil
 }

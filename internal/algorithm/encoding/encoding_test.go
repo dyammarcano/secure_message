@@ -2,8 +2,10 @@ package encoding
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestEncoding1kChars(t *testing.T) {
@@ -15,5 +17,5 @@ func TestEncoding1kChars(t *testing.T) {
 
 	assert.Equal(t, deserialized, "hello world")
 
-	fmt.Printf("serialized: %s, deserialized: %s\n", serialized, deserialized)
+	_, _ = fmt.Fprintf(os.Stdout, "serialized: %s, deserialized: %s\n", serialized, deserialized)
 }

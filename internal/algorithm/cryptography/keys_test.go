@@ -2,19 +2,23 @@ package cryptography
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/assert"
+	"os"
 	"testing"
+
+	"github.com/stretchr/testify/assert"
 )
 
 var rkeys map[int][]byte
 
 func setup() {
 	rkeys = make(map[int][]byte)
+
 	for i := 0; i < 10; i++ {
 		k, err := GenerateKeys(4)
 		if err != nil {
 			panic(fmt.Sprintf("Failed to generate keys: %v", err))
 		}
+
 		rkeys[i] = k
 	}
 }
@@ -31,7 +35,7 @@ func TestNewKeys(t *testing.T) {
 	assert.NotNil(t, key)
 	assert.NotNil(t, nonce)
 
-	fmt.Printf("original key: %x, key generated for encrypt data: %x, nonce: %x\n", rkeys[0], key, nonce)
+	_, _ = fmt.Fprintf(os.Stdout, "original key: %x, key generated for encrypt data: %x, nonce: %x\n", rkeys[0], key, nonce)
 }
 
 func BenchmarkNewKeys(b *testing.B) {
