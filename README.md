@@ -7,7 +7,7 @@
 
 `this project is in development`
 
-## TODO 
+## TODO
 
 - [ ] Add tests
 - [ ] Add more documentation
@@ -20,7 +20,8 @@
 
 ## Introduction
 
-This is a simple command line tool that encrypts and decrypts messages. The message is encrypted with a simple algorithm and then encoded in base58.
+This is a simple command line tool that encrypts and decrypts messages. The message is encrypted with a simple algorithm
+and then encoded in base58.
 
 ## Description
 
